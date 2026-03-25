@@ -2,16 +2,19 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using SoulRift.Core;
+using SoulRift.Gameplay;
 
 namespace SoulRift.UI
 {
     /// <summary>
     /// Soul meter HUD. Ruh yuzdesini ve state rengini gosterir.
+    /// WaveManager.OnWaveStarted event'ini dinleyerek wave numarasini gunceller.
     /// </summary>
     public class SoulMeterHUD : MonoBehaviour
     {
         [Header("Referanslar")]
         [SerializeField] private SoulSystem _soulSystem;
+        [SerializeField] private WaveManager _waveManager;
 
         [Header("UI Elemanlari")]
         [SerializeField] private Image _meterFill;
@@ -29,18 +32,26 @@ namespace SoulRift.UI
 
         private void OnEnable()
         {
-            if (_soulSystem == null) return;
-            _soulSystem.OnSoulValueChanged += UpdateMeter;
-            _soulSystem.OnSoulStateChanged += UpdateState;
-            _soulSystem.OnHungerStackChanged += UpdateHunger;
+            if (_soulSystem != null)
+            {
+                _soulSystem.OnSoulValueChanged += UpdateMeter;
+                _soulSystem.OnSoulStateChanged += UpdateState;
+                _soulSystem.OnHungerStackChanged += UpdateHunger;
+            }
+            if (_waveManager != null)
+                _waveManager.OnWaveStarted += HandleWaveStarted;
         }
 
         private void OnDisable()
         {
-            if (_soulSystem == null) return;
-            _soulSystem.OnSoulValueChanged -= UpdateMeter;
-            _soulSystem.OnSoulStateChanged -= UpdateState;
-            _soulSystem.OnHungerStackChanged -= UpdateHunger;
+            if (_soulSystem != null)
+            {
+                _soulSystem.OnSoulValueChanged -= UpdateMeter;
+                _soulSystem.OnSoulStateChanged -= UpdateState;
+                _soulSystem.OnHungerStackChanged -= UpdateHunger;
+            }
+            if (_waveManager != null)
+                _waveManager.OnWaveStarted -= HandleWaveStarted;
         }
 
         private void Start()
@@ -82,6 +93,11 @@ namespace SoulRift.UI
         {
             if (_hungerText != null)
                 _hungerText.text = stacks > 0 ? $"Hunger x{stacks}" : "";
+        }
+
+        private void HandleWaveStarted(int waveNumber)
+        {
+            SetWaveText(waveNumber);
         }
 
         public void SetWaveText(int wave)

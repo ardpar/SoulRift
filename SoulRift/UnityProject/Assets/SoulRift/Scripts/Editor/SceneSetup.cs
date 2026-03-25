@@ -211,7 +211,7 @@ public static class SceneSetup
         CreateArenaBoundary();
 
         // --- 7. HUD ---
-        SetupHUD(tSoulMeterHUD, tWarningVignette, soulSystem);
+        SetupHUD(tSoulMeterHUD, tWarningVignette, soulSystem, waveManager);
 
         // --- 8. GAME MANAGER (HUD referanslari gerektirir) ---
         if (gameManager != null)
@@ -222,11 +222,6 @@ public static class SceneSetup
             SetRef(gameManager, "_enemyPrefab", enemyPrefab);
             SetRef(gameManager, "_projectilePrefab", projectilePrefab);
             SetRef(gameManager, "_soulOrbPrefab", soulOrbPrefab);
-
-            // HUD referanslari
-            var hudPanel = GameObject.Find("HUDCanvas")?.transform.Find("SoulMeterPanel");
-            if (hudPanel != null)
-                SetRef(gameManager, "_soulMeterHUD", hudPanel.GetComponent(tSoulMeterHUD));
 
             var goPanel = GameObject.Find("HUDCanvas")?.transform.Find("GameOverPanel");
             if (goPanel != null)
@@ -470,7 +465,7 @@ public static class SceneSetup
 
     // ======== HUD ========
 
-    private static void SetupHUD(System.Type tSoulMeterHUD, System.Type tWarningVignette, Object soulSystem)
+    private static void SetupHUD(System.Type tSoulMeterHUD, System.Type tWarningVignette, Object soulSystem, Object waveManager)
     {
         var canvasObj = GameObject.Find("HUDCanvas");
         if (canvasObj == null)
@@ -552,6 +547,7 @@ public static class SceneSetup
                 SetRef(hudComp, "_stateText", stateTextObj.GetComponent<TextMeshProUGUI>());
                 SetRef(hudComp, "_hungerText", hungerTextObj.GetComponent<TextMeshProUGUI>());
                 SetRef(hudComp, "_waveText", waveTextObj.GetComponent<TextMeshProUGUI>());
+                SetRef(hudComp, "_waveManager", waveManager);
             }
         }
 

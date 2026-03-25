@@ -71,9 +71,7 @@ namespace SoulRift.UI
             }
             else if (_soulSystem.CurrentState == SoulState.SurgeWarning)
             {
-                // Warning timer'a gore alpha artar
-                float timeRatio = 1f - (_soulSystem.WarningTimeRemaining /
-                    (_soulSystem.WarningTimeRemaining + 0.01f)); // 0→1 arası
+                // Warning sin wave ile nabiz
                 float alpha = Mathf.Lerp(_warningColor.a * 0.3f, _warningColor.a, 0.5f + Mathf.Sin(Time.time * 3f) * 0.5f);
                 _vignetteImage.color = new Color(_warningColor.r, _warningColor.g, _warningColor.b, alpha);
             }

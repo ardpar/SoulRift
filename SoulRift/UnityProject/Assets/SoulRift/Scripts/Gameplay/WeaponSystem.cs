@@ -25,7 +25,7 @@ namespace SoulRift.Gameplay
         {
             _fireCooldown -= Time.deltaTime;
 
-            if (_playerController.IsFirePressed && _fireCooldown <= 0f)
+            if (_playerController != null && _playerController.IsFirePressed && _fireCooldown <= 0f)
             {
                 Fire();
                 _fireCooldown = _fireRate;

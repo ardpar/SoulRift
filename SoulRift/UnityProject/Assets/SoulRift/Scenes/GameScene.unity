@@ -5326,6 +5326,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: SoulRift.UI::SoulRift.UI.SoulMeterHUD
   _soulSystem: {fileID: 837832989}
+  _waveManager: {fileID: 1776323398}
   _meterFill: {fileID: 284972174}
   _soulText: {fileID: 1651984381}
   _stateText: {fileID: 584751737}
@@ -6677,7 +6678,6 @@ MonoBehaviour:
   _soulSystem: {fileID: 837832989}
   _waveManager: {fileID: 1776323398}
   _poolManager: {fileID: 1776323395}
-  _soulMeterHUD: {fileID: 530555878}
   _enemyPrefab: {fileID: 5674388991781882740, guid: f09286560c95e4a6080de7bb28d32424, type: 3}
   _enemyWarmup: 30
   _projectilePrefab: {fileID: 8483334250076584749, guid: e650f3769edc2465b99c414ce5f49026, type: 3}

@@ -3,7 +3,6 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using SoulRift.Core;
-using SoulRift.UI;
 
 namespace SoulRift.Gameplay
 {
@@ -15,7 +14,6 @@ namespace SoulRift.Gameplay
         [SerializeField] private SoulSystem _soulSystem;
         [SerializeField] private WaveManager _waveManager;
         [SerializeField] private PoolManager _poolManager;
-        [SerializeField] private SoulMeterHUD _soulMeterHUD;
 
         [Header("Prefab Warmup")]
         [SerializeField] private GameObject _enemyPrefab;
@@ -36,16 +34,12 @@ namespace SoulRift.Gameplay
         {
             if (_soulSystem != null)
                 _soulSystem.OnPlayerDeath += HandlePlayerDeath;
-            if (_waveManager != null)
-                _waveManager.OnWaveStarted += HandleWaveStarted;
         }
 
         private void OnDisable()
         {
             if (_soulSystem != null)
                 _soulSystem.OnPlayerDeath -= HandlePlayerDeath;
-            if (_waveManager != null)
-                _waveManager.OnWaveStarted -= HandleWaveStarted;
         }
 
         private void Start()
@@ -69,12 +63,6 @@ namespace SoulRift.Gameplay
                 _poolManager.Warmup(_projectilePrefab, _projectileWarmup);
             if (_soulOrbPrefab != null)
                 _poolManager.Warmup(_soulOrbPrefab, _soulOrbWarmup);
-        }
-
-        private void HandleWaveStarted(int waveNumber)
-        {
-            if (_soulMeterHUD != null)
-                _soulMeterHUD.SetWaveText(waveNumber);
         }
 
         private void HandlePlayerDeath()
