@@ -1,0 +1,1326 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SOULRIFT — Game Design Document v0.2</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700&family=Cinzel:wght@400;600&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #080a0f;
+    --bg2: #0d1018;
+    --bg3: #131720;
+    --border: #1e2535;
+    --accent: #7c5cfc;
+    --accent2: #c084fc;
+    --gold: #f0b429;
+    --red: #e05252;
+    --green: #4ade80;
+    --orange: #fb923c;
+    --text: #c8d0e0;
+    --text-dim: #6b7a99;
+    --text-bright: #eef0f8;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 14px;
+    line-height: 1.8;
+    min-height: 100vh;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(124,92,252,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(124,92,252,0.03) 1px, transparent 1px);
+    background-size: 32px 32px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 48px 24px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .header {
+    text-align: center;
+    padding: 64px 0 48px;
+    position: relative;
+  }
+
+  .header::after {
+    content: '';
+    display: block;
+    width: 200px;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--accent), transparent);
+    margin: 32px auto 0;
+  }
+
+  .game-title {
+    font-family: 'Cinzel Decorative', serif;
+    font-size: clamp(36px, 8vw, 72px);
+    background: linear-gradient(135deg, #7c5cfc, #c084fc, #f0b429);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    letter-spacing: 0.1em;
+    line-height: 1.1;
+    animation: titleGlow 3s ease-in-out infinite alternate;
+  }
+
+  @keyframes titleGlow {
+    from { filter: drop-shadow(0 0 20px rgba(124,92,252,0.4)); }
+    to { filter: drop-shadow(0 0 40px rgba(192,132,252,0.6)); }
+  }
+
+  .subtitle {
+    font-family: 'Cinzel', serif;
+    color: var(--text-dim);
+    font-size: 13px;
+    letter-spacing: 0.4em;
+    text-transform: uppercase;
+    margin-top: 12px;
+  }
+
+  .meta-tags {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-top: 24px;
+  }
+
+  .tag {
+    padding: 4px 12px;
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    color: var(--text-dim);
+    background: var(--bg2);
+  }
+
+  .tag.highlight { border-color: var(--accent); color: var(--accent2); }
+  .tag.version { border-color: var(--gold); color: var(--gold); }
+
+  /* Changelog */
+  .changelog {
+    border: 1px solid var(--gold);
+    background: rgba(240,180,41,0.04);
+    padding: 20px 28px;
+    margin: 32px 0;
+    position: relative;
+  }
+
+  .changelog::before {
+    content: 'CHANGELOG — v0.2';
+    font-family: 'Cinzel', serif;
+    font-size: 10px;
+    letter-spacing: 0.25em;
+    color: var(--gold);
+    position: absolute;
+    top: -8px;
+    left: 20px;
+    background: var(--bg);
+    padding: 0 8px;
+  }
+
+  .changelog-list {
+    list-style: none;
+    padding: 0;
+  }
+
+  .changelog-list li {
+    padding: 6px 0;
+    border-bottom: 1px solid rgba(240,180,41,0.1);
+    font-size: 12px;
+    color: var(--text-dim);
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+  }
+
+  .changelog-list li:last-child { border-bottom: none; }
+
+  .changelog-list .cl-tag {
+    font-size: 10px;
+    padding: 2px 6px;
+    border-radius: 2px;
+    white-space: nowrap;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  .cl-new { background: rgba(74,222,128,0.15); color: var(--green); border: 1px solid rgba(74,222,128,0.3); }
+  .cl-changed { background: rgba(240,180,41,0.15); color: var(--gold); border: 1px solid rgba(240,180,41,0.3); }
+  .cl-fixed { background: rgba(124,92,252,0.15); color: var(--accent2); border: 1px solid rgba(124,92,252,0.3); }
+
+  /* Section */
+  .section {
+    margin: 48px 0;
+    border: 1px solid var(--border);
+    background: var(--bg2);
+    position: relative;
+    overflow: hidden;
+    opacity: 0;
+    transform: translateY(20px);
+    animation: fadeUp 0.5s ease forwards;
+  }
+
+  .section:nth-child(1) { animation-delay: 0.05s; }
+  .section:nth-child(2) { animation-delay: 0.1s; }
+  .section:nth-child(3) { animation-delay: 0.15s; }
+  .section:nth-child(4) { animation-delay: 0.2s; }
+  .section:nth-child(5) { animation-delay: 0.25s; }
+  .section:nth-child(6) { animation-delay: 0.3s; }
+  .section:nth-child(7) { animation-delay: 0.35s; }
+  .section:nth-child(8) { animation-delay: 0.4s; }
+  .section:nth-child(9) { animation-delay: 0.45s; }
+  .section:nth-child(10) { animation-delay: 0.5s; }
+
+  @keyframes fadeUp {
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .section::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--accent), transparent);
+    opacity: 0.6;
+  }
+
+  .section-header {
+    padding: 20px 28px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: var(--bg3);
+  }
+
+  .section-num {
+    font-family: 'Cinzel', serif;
+    font-size: 11px;
+    color: var(--accent);
+    letter-spacing: 0.2em;
+    min-width: 32px;
+  }
+
+  .section-title {
+    font-family: 'Cinzel', serif;
+    font-size: 15px;
+    color: var(--text-bright);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .section-badge {
+    margin-left: auto;
+    font-size: 9px;
+    padding: 3px 8px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    border-radius: 2px;
+  }
+
+  .badge-updated { background: rgba(240,180,41,0.15); color: var(--gold); border: 1px solid rgba(240,180,41,0.3); }
+  .badge-new { background: rgba(74,222,128,0.15); color: var(--green); border: 1px solid rgba(74,222,128,0.3); }
+
+  .section-body { padding: 28px; }
+
+  /* High concept box */
+  .concept-box {
+    border: 1px solid var(--accent);
+    background: rgba(124,92,252,0.08);
+    padding: 24px 28px;
+    margin-bottom: 24px;
+  }
+
+  .concept-box p {
+    font-size: 16px;
+    color: var(--text-bright);
+    line-height: 1.7;
+  }
+
+  .concept-box .quote-mark {
+    font-family: 'Cinzel Decorative', serif;
+    font-size: 48px;
+    color: var(--accent);
+    opacity: 0.3;
+    line-height: 1;
+    margin-bottom: -12px;
+    display: block;
+  }
+
+  /* Soul meter */
+  .soul-meter {
+    margin: 24px 0;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    padding: 24px;
+  }
+
+  .soul-meter-label {
+    font-family: 'Cinzel', serif;
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    margin-bottom: 16px;
+  }
+
+  .soul-states {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 2px;
+  }
+
+  .soul-state {
+    padding: 14px 6px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .soul-state::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 3px;
+  }
+
+  .soul-state.empty { background: rgba(30,37,53,0.5); }
+  .soul-state.empty::after { background: var(--text-dim); }
+
+  .soul-state.low { background: rgba(74,222,128,0.05); }
+  .soul-state.low::after { background: var(--green); }
+
+  .soul-state.high { background: rgba(240,180,41,0.08); }
+  .soul-state.high::after { background: var(--gold); }
+
+  .soul-state.warning { background: rgba(251,146,60,0.08); animation: pulseOrange 2s ease-in-out infinite; }
+  .soul-state.warning::after { background: var(--orange); }
+
+  @keyframes pulseOrange {
+    0%, 100% { background: rgba(251,146,60,0.06); }
+    50% { background: rgba(251,146,60,0.14); }
+  }
+
+  .soul-state.max { background: rgba(224,82,82,0.1); animation: pulseRed 1.5s ease-in-out infinite; }
+  .soul-state.max::after { background: var(--red); }
+
+  @keyframes pulseRed {
+    0%, 100% { background: rgba(224,82,82,0.08); }
+    50% { background: rgba(224,82,82,0.18); }
+  }
+
+  .soul-state-name {
+    font-family: 'Cinzel', serif;
+    font-size: 9px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+
+  .soul-state.empty .soul-state-name { color: var(--text-dim); }
+  .soul-state.low .soul-state-name { color: var(--green); }
+  .soul-state.high .soul-state-name { color: var(--gold); }
+  .soul-state.warning .soul-state-name { color: var(--orange); }
+  .soul-state.max .soul-state-name { color: var(--red); }
+
+  .soul-state-range {
+    font-size: 15px;
+    font-weight: bold;
+    display: block;
+    margin-bottom: 6px;
+    color: var(--text-bright);
+  }
+
+  .soul-effects { font-size: 10px; color: var(--text-dim); line-height: 1.6; }
+  .soul-effects span { display: block; }
+  .soul-effects .pos { color: var(--green); }
+  .soul-effects .neg { color: var(--red); }
+  .soul-effects .neu { color: var(--gold); }
+  .soul-effects .warn { color: var(--orange); }
+
+  /* Design note box */
+  .design-note {
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent);
+    background: rgba(124,92,252,0.04);
+    padding: 16px 20px;
+    margin: 20px 0;
+    font-size: 12px;
+  }
+
+  .design-note-label {
+    font-family: 'Cinzel', serif;
+    font-size: 9px;
+    color: var(--accent);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+
+  .design-note p { margin-bottom: 0; font-size: 12px; color: var(--text-dim); }
+  .design-note p strong { color: var(--text); }
+
+  /* Mechanic block */
+  .mechanic-block {
+    border: 1px solid var(--border);
+    background: var(--bg3);
+    padding: 20px 24px;
+    margin: 20px 0;
+  }
+
+  .mechanic-title {
+    font-family: 'Cinzel', serif;
+    font-size: 12px;
+    color: var(--accent2);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .mechanic-title .new-badge {
+    font-size: 9px;
+    padding: 2px 6px;
+    background: rgba(74,222,128,0.15);
+    color: var(--green);
+    border: 1px solid rgba(74,222,128,0.3);
+    border-radius: 2px;
+  }
+
+  .flow-diagram {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin: 12px 0;
+    font-size: 11px;
+  }
+
+  .flow-step {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    padding: 6px 10px;
+    color: var(--text);
+    white-space: nowrap;
+  }
+
+  .flow-step.accent { border-color: var(--accent); color: var(--accent2); }
+  .flow-step.gold { border-color: var(--gold); color: var(--gold); }
+  .flow-step.green { border-color: var(--green); color: var(--green); }
+  .flow-step.red { border-color: var(--red); color: var(--red); }
+  .flow-step.orange { border-color: var(--orange); color: var(--orange); }
+
+  .flow-arrow { color: var(--text-dim); font-size: 12px; }
+
+  /* Stat grid */
+  .stat-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 12px;
+    margin: 16px 0;
+  }
+
+  .stat-card {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    padding: 16px;
+  }
+
+  .stat-card-label {
+    font-size: 10px;
+    color: var(--text-dim);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+
+  .stat-card-value {
+    font-family: 'Cinzel', serif;
+    font-size: 20px;
+    color: var(--accent2);
+  }
+
+  .stat-card-desc {
+    font-size: 11px;
+    color: var(--text-dim);
+    margin-top: 4px;
+    line-height: 1.5;
+  }
+
+  /* Table */
+  .data-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+
+  .data-table th {
+    font-family: 'Cinzel', serif;
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--accent);
+    padding: 12px 16px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg3);
+  }
+
+  .data-table td {
+    padding: 12px 16px;
+    border-bottom: 1px solid rgba(30,37,53,0.5);
+    color: var(--text);
+    vertical-align: top;
+  }
+
+  .data-table tr:last-child td { border-bottom: none; }
+  .data-table tr:hover td { background: rgba(124,92,252,0.05); }
+
+  .data-table td:first-child {
+    font-family: 'Cinzel', serif;
+    color: var(--text-bright);
+    font-size: 12px;
+    white-space: nowrap;
+  }
+
+  /* Pill */
+  .pill {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 2px;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .pill-purple { background: rgba(124,92,252,0.2); color: var(--accent2); border: 1px solid rgba(124,92,252,0.3); }
+  .pill-gold { background: rgba(240,180,41,0.15); color: var(--gold); border: 1px solid rgba(240,180,41,0.3); }
+  .pill-green { background: rgba(74,222,128,0.1); color: var(--green); border: 1px solid rgba(74,222,128,0.2); }
+  .pill-red { background: rgba(224,82,82,0.1); color: var(--red); border: 1px solid rgba(224,82,82,0.2); }
+  .pill-orange { background: rgba(251,146,60,0.1); color: var(--orange); border: 1px solid rgba(251,146,60,0.2); }
+
+  /* Timeline */
+  .timeline {
+    position: relative;
+    padding-left: 32px;
+  }
+
+  .timeline::before {
+    content: '';
+    position: absolute;
+    left: 8px; top: 0; bottom: 0;
+    width: 1px;
+    background: linear-gradient(to bottom, var(--accent), transparent);
+  }
+
+  .timeline-item {
+    position: relative;
+    margin-bottom: 28px;
+  }
+
+  .timeline-item::before {
+    content: '';
+    position: absolute;
+    left: -28px;
+    top: 6px;
+    width: 8px; height: 8px;
+    background: var(--accent);
+    border-radius: 1px;
+    transform: rotate(45deg);
+  }
+
+  .timeline-week {
+    font-family: 'Cinzel', serif;
+    font-size: 10px;
+    color: var(--accent);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+
+  .timeline-title {
+    font-size: 14px;
+    color: var(--text-bright);
+    margin-bottom: 6px;
+  }
+
+  .timeline-tasks {
+    font-size: 12px;
+    color: var(--text-dim);
+    line-height: 1.7;
+  }
+
+  .timeline-tasks li {
+    list-style: none;
+    padding-left: 16px;
+    position: relative;
+  }
+
+  .timeline-tasks li::before {
+    content: '›';
+    position: absolute;
+    left: 0;
+    color: var(--accent);
+  }
+
+  .timeline-tasks li.added { color: var(--green); }
+  .timeline-tasks li.added::before { color: var(--green); content: '+'; }
+
+  /* Competitor analysis */
+  .comp-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 12px;
+  }
+
+  .comp-card {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    padding: 20px;
+  }
+
+  .comp-name {
+    font-family: 'Cinzel', serif;
+    font-size: 13px;
+    color: var(--text-bright);
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .comp-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    margin-bottom: 6px;
+  }
+
+  .comp-row .key { color: var(--text-dim); }
+  .comp-row .val { color: var(--text); text-align: right; max-width: 60%; }
+
+  /* Risk */
+  .risk-item {
+    display: flex;
+    gap: 16px;
+    padding: 16px;
+    border-bottom: 1px solid var(--border);
+    align-items: flex-start;
+  }
+
+  .risk-item:last-child { border-bottom: none; }
+
+  .risk-level {
+    font-family: 'Cinzel', serif;
+    font-size: 9px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    padding: 4px 8px;
+    white-space: nowrap;
+    align-self: flex-start;
+    margin-top: 2px;
+  }
+
+  .risk-content .risk-title { color: var(--text-bright); font-size: 13px; margin-bottom: 4px; }
+  .risk-content .risk-mitigation { color: var(--text-dim); font-size: 12px; }
+
+  /* Cursed item framework */
+  .cursed-framework {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 2px;
+    margin: 20px 0;
+  }
+
+  .cursed-row {
+    background: var(--bg3);
+    padding: 14px 16px;
+    border: 1px solid var(--border);
+  }
+
+  .cursed-row-label {
+    font-family: 'Cinzel', serif;
+    font-size: 9px;
+    color: var(--red);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+
+  .cursed-row-value {
+    font-size: 12px;
+    color: var(--text);
+    line-height: 1.5;
+  }
+
+  p { margin-bottom: 12px; color: var(--text); }
+  p:last-child { margin-bottom: 0; }
+  strong { color: var(--text-bright); }
+
+  .divider {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 24px 0;
+  }
+
+  .footer {
+    text-align: center;
+    padding: 48px 0 24px;
+    font-size: 11px;
+    color: var(--text-dim);
+    letter-spacing: 0.1em;
+  }
+
+  .footer .ver {
+    font-family: 'Cinzel', serif;
+    color: var(--accent);
+    margin-bottom: 8px;
+    font-size: 12px;
+  }
+
+  .inline-list { padding-left: 20px; }
+  .inline-list li { margin-bottom: 6px; color: var(--text); }
+  .inline-list li::marker { color: var(--accent); }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <div class="header">
+    <div class="game-title">SOULRIFT</div>
+    <div class="subtitle">Game Design Document — v0.2</div>
+    <div class="meta-tags">
+      <span class="tag highlight">Bullet-Heaven Roguelite</span>
+      <span class="tag">Pixel Art</span>
+      <span class="tag">Top-Down Arena</span>
+      <span class="tag">Unity</span>
+      <span class="tag">Steam — Solo Dev</span>
+      <span class="tag">Dark Fantasy</span>
+      <span class="tag version">v0.2 — Design Revision</span>
+    </div>
+  </div>
+
+  <!-- CHANGELOG -->
+  <div class="changelog">
+    <ul class="changelog-list">
+      <li>
+        <span class="cl-tag cl-new">YENİ</span>
+        <span><strong>Hollow Hunger mekaniği eklendi</strong> — Hollow state'de geçirilen süre "Hunger stack" biriktirir. Death spiral'ı önler, Hollow'u kasıtlı bir playstyle'a dönüştürür.</span>
+      </li>
+      <li>
+        <span class="cl-tag cl-new">YENİ</span>
+        <span><strong>Surge Warning state eklendi (%85–90)</strong> — Overflow'dan önce 3–4 saniyelik uyarı katmanı. Oyuncu artık Overflow'a bilinçli giriyor.</span>
+      </li>
+      <li>
+        <span class="cl-tag cl-changed">DEĞİŞTİ</span>
+        <span><strong>Hollow state bonusu güncellendi</strong> — "Düşmanlar hedef almaz" → "Item fiyatları %30 ucuz". Passive güvenli kasma stratejisini engeller, aktif karar vermeyi teşvik eder.</span>
+      </li>
+      <li>
+        <span class="cl-tag cl-changed">DEĞİŞTİ</span>
+        <span><strong>Cursed Item sistemi netleştirildi</strong> — Tetiklenme eşiği, maliyet yapısı, karakter interaksiyonu ve normal item slotlarıyla ilişkisi tanımlandı.</span>
+      </li>
+      <li>
+        <span class="cl-tag cl-fixed">DÜZELTME</span>
+        <span><strong>Soul state sayısı 4 → 5'e çıktı</strong> — Surge Warning eklenmesiyle soul spektrumu genişledi. Hafta 2 playtest önceliği: Hunger + Warning window hissi.</span>
+      </li>
+    </ul>
+  </div>
+
+  <!-- 01 HIGH CONCEPT -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-num">01</span>
+      <span class="section-title">High Concept</span>
+    </div>
+    <div class="section-body">
+      <div class="concept-box">
+        <span class="quote-mark">"</span>
+        <p>Brotato'nun item sinerji derinliğini, <strong>tek bir kaynak</strong> olan Ruh üzerine inşa edilmiş bir risk/ödül sistemiyle birleştiren top-down arena roguelite'ı. Ruh topladıkça güçlenirsin — ama aynı zamanda öldürücü hale gelirsin.</p>
+      </div>
+
+      <div class="stat-grid">
+        <div class="stat-card">
+          <div class="stat-card-label">Genre</div>
+          <div class="stat-card-value">Bullet-Heaven</div>
+          <div class="stat-card-desc">Brotato / VS formatı, orijinal mekanik twist</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-label">Session Süresi</div>
+          <div class="stat-card-value">20–35 dk</div>
+          <div class="stat-card-desc">Run başına hedef süre</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-label">Platform</div>
+          <div class="stat-card-value">Steam PC</div>
+          <div class="stat-card-desc">Windows öncelikli, Mac opsiyonel</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-label">Hedef Fiyat</div>
+          <div class="stat-card-value">4–6 USD</div>
+          <div class="stat-card-desc">Impulse buy range, wishlister dönüşümü yüksek</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 02 CORE MECHANIC -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-num">02</span>
+      <span class="section-title">Core Mechanic — Soul System</span>
+      <span class="section-badge badge-updated">v0.2 Güncellendi</span>
+    </div>
+    <div class="section-body">
+
+      <p><strong>Ruh (Soul)</strong>, oyundaki tek kaynak. Can, para ve güç kaynağı aynı anda. Düşman öldürmek Ruh verir. Hasar almak Ruh tüketir. Item satın almak Ruh tüketir. Miktarına göre oyuncu tamamen farklı bir karaktere dönüşür.</p>
+
+      <div class="soul-meter">
+        <div class="soul-meter-label">Soul Level — 5 State Sistemi (v0.2)</div>
+        <div class="soul-states">
+          <div class="soul-state empty">
+            <div class="soul-state-name">Hollow</div>
+            <span class="soul-state-range">0–25%</span>
+            <div class="soul-effects">
+              <span class="neg">— Hasar %50 düşük</span>
+              <span class="neg">— Hareket yavaş</span>
+              <span class="pos">+ Item fiyatı %30 ucuz</span>
+              <span class="pos">+ Hunger stack birikir</span>
+            </div>
+          </div>
+          <div class="soul-state low">
+            <div class="soul-state-name">Stable</div>
+            <span class="soul-state-range">25–60%</span>
+            <div class="soul-effects">
+              <span class="neu">● Normal hasar</span>
+              <span class="neu">● Normal hız</span>
+              <span class="neu">● Denge bölgesi</span>
+            </div>
+          </div>
+          <div class="soul-state high">
+            <div class="soul-state-name">Surging</div>
+            <span class="soul-state-range">60–85%</span>
+            <div class="soul-effects">
+              <span class="pos">+ Hasar %75 yüksek</span>
+              <span class="pos">+ Görsel efektler</span>
+              <span class="neg">— Düşmanlar hedef alır</span>
+            </div>
+          </div>
+          <div class="soul-state warning">
+            <div class="soul-state-name">Surge Warning</div>
+            <span class="soul-state-range">85–90%</span>
+            <div class="soul-effects">
+              <span class="warn">⚠ Ekran kenarı titrer</span>
+              <span class="warn">⚠ Ses efekti başlar</span>
+              <span class="neu">3–4 sn karar ver</span>
+            </div>
+          </div>
+          <div class="soul-state max">
+            <div class="soul-state-name">Overflow</div>
+            <span class="soul-state-range">90–100%</span>
+            <div class="soul-effects">
+              <span class="pos">+ Hasar ×3</span>
+              <span class="neg">— 1 vuruşta ölüm</span>
+              <span class="neg">— Elite spawn</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- HOLLOW HUNGER -->
+      <div class="mechanic-block">
+        <div class="mechanic-title">
+          Hollow Hunger Mekaniği
+          <span class="new-badge">YENİ — v0.2</span>
+        </div>
+
+        <p style="font-size:12px; color:var(--text-dim); margin-bottom:14px;">
+          Death spiral sorununu çözer. Hollow state artık bir ceza değil — <strong>kasıtlı olarak girilip çıkılan bir ritim.</strong>
+        </p>
+
+        <div class="flow-diagram">
+          <span class="flow-step orange">Hollow State</span>
+          <span class="flow-arrow">→</span>
+          <span class="flow-step">Her 2 sn hayatta kal</span>
+          <span class="flow-arrow">→</span>
+          <span class="flow-step accent">Hunger ×1 birikir</span>
+          <span class="flow-arrow">→</span>
+          <span class="flow-step green">Sonraki öldürme ×3 Ruh</span>
+          <span class="flow-arrow">→</span>
+          <span class="flow-step gold">Stable'a zıpla</span>
+        </div>
+
+        <div class="design-note" style="margin-top:14px;">
+          <div class="design-note-label">Tasarım Notu</div>
+          <p>Hunger stack <strong>maksimum 3 adet</strong> birikir. Dolunca karakterin etrafında küçük ruhani partiküller belirir — UI'a bakmadan oyuncu "şimdi öldür" anını görür ve hisseder. The Hollow karakterinin pasifiyle de doğrudan sinerjik: Hollow'da hasar normale eşit olduğu için stack biriktirirken de etkin savaşabilir.</p>
+        </div>
+      </div>
+
+      <!-- SURGE WARNING -->
+      <div class="mechanic-block">
+        <div class="mechanic-title">
+          Overflow Window — Surge Warning
+          <span class="new-badge">YENİ — v0.2</span>
+        </div>
+
+        <p style="font-size:12px; color:var(--text-dim); margin-bottom:14px;">
+          Overflow artık "kazara girilen tehlike" değil, <strong>bilinçli alınan bir karar.</strong>
+        </p>
+
+        <div class="flow-diagram">
+          <span class="flow-step gold">Surging (%85)</span>
+          <span class="flow-arrow">→</span>
+          <span class="flow-step orange">Surge Warning başlar</span>
+          <span class="flow-arrow">→</span>
+          <span class="flow-step">3–4 sn:</span>
+          <span class="flow-step green">Ruh harca → Surging'e dön</span>
+          <span class="flow-arrow">veya</span>
+          <span class="flow-step red">Devam et → Overflow</span>
+        </div>
+
+        <div class="design-note" style="margin-top:14px;">
+          <div class="design-note-label">Görsel / Ses Feedback</div>
+          <p>Surge Warning'de ekran kenarları turuncu titrer, düşük frekanslı uğultu sesi başlar. Bu sayede oyuncu UI'a bakmadan durumu okur. <strong>The Vessel karakteri</strong> bu window'dan ek 2 saniye kazanır — Overflow yönetimi onun temel skill expression'ı haline gelir.</p>
+        </div>
+      </div>
+
+      <p>Oyuncu sürekli <strong>Ruh miktarını yönetir</strong>. Fazla Ruh toplarsan çok güçlü ama çok kırılgansın. Az tutarsan Hollow Hunger ile toparlanabilirsin. Item'lar bu dengeyi etkileyen sinerjiler oluşturur.</p>
+
+      <hr class="divider">
+
+      <p><strong>Temel loop:</strong> Wave başlar → Düşman öldür → Ruh topla → Soul state değişir → Item satın al (Ruh harca) → Yeni wave. Her wave sonunda 3 item seçeneği çıkar, hangisi alınır Ruh seviyesini ve stratejisini belirler.</p>
+
+    </div>
+  </div>
+
+  <!-- 03 GAMEPLAY LOOP -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-num">03</span>
+      <span class="section-title">Gameplay Loop</span>
+    </div>
+    <div class="section-body">
+
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Katman</th>
+            <th>Süre</th>
+            <th>Açıklama</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Micro Loop</td>
+            <td>~10 sn</td>
+            <td>Hareket et, ateş et, Ruh topla, Soul state takip et</td>
+          </tr>
+          <tr>
+            <td>Wave Loop</td>
+            <td>~90 sn</td>
+            <td>Wave temizle → Shop → 3 item seç → Sinerji planla</td>
+          </tr>
+          <tr>
+            <td>Run Loop</td>
+            <td>~25 dk</td>
+            <td>15–20 wave, boss wave'leri, final boss</td>
+          </tr>
+          <tr>
+            <td>Meta Loop</td>
+            <td>Uzun vadeli</td>
+            <td>Unlock sistemi: yeni karakterler, item pool genişlemesi, zorluk modları</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <hr class="divider">
+
+      <p><strong>Shop Mekaniği:</strong> Wave sonunda Ruh harcanarak item alınır. Hollow'dayken fiyatlar %30 ucuz — bu Hollow'u kasıtlı kullanılan bir "ucuz alışveriş anı"na dönüştürür. Surging veya Overflow'da shop açılırsa normal 3 item + 1 <strong>Cursed Item slotu</strong> eklenir.</p>
+
+    </div>
+  </div>
+
+  <!-- 04 ITEMS & SYNERGIES -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-num">04</span>
+      <span class="section-title">Item Kategorileri & Sinerjiler</span>
+      <span class="section-badge badge-updated">v0.2 Güncellendi</span>
+    </div>
+    <div class="section-body">
+
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Kategori</th>
+            <th>Renk</th>
+            <th>Etki Türü</th>
+            <th>Örnek</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Soul Anchor</td>
+            <td><span class="pill pill-purple">Mor</span></td>
+            <td>Ruh seviyesini stabilize eder</td>
+            <td>"Overflow'da ölmek yerine %50'ye indir"</td>
+          </tr>
+          <tr>
+            <td>Amplifier</td>
+            <td><span class="pill pill-gold">Altın</span></td>
+            <td>Surging/Overflow hasarı artırır</td>
+            <td>"Overflow'da her vuruş alan hasarı açar"</td>
+          </tr>
+          <tr>
+            <td>Harvester</td>
+            <td><span class="pill pill-green">Yeşil</span></td>
+            <td>Ruh toplama oranını değiştirir</td>
+            <td>"Her 10. öldürmede %20 bonus Ruh"</td>
+          </tr>
+          <tr>
+            <td>Cursed</td>
+            <td><span class="pill pill-red">Kırmızı</span></td>
+            <td>Güçlü bonus + kalıcı dezavantaj</td>
+            <td>"Tüm hasarın ×2 ama max Ruh %80'e düşer"</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <hr class="divider">
+
+      <!-- CURSED ITEM FRAMEWORK -->
+      <p><strong>Cursed Item Sistemi — Tanım Çerçevesi (v0.2)</strong></p>
+
+      <div class="cursed-framework">
+        <div class="cursed-row">
+          <div class="cursed-row-label">Tetiklenme</div>
+          <div class="cursed-row-value">Surging (%60+) veya Overflow'dayken shop açılırsa normal 3 item + 1 Cursed slot eklenir. Stable veya Hollow'da Cursed slot çıkmaz.</div>
+        </div>
+        <div class="cursed-row">
+          <div class="cursed-row-label">Maliyet</div>
+          <div class="cursed-row-value">Normal item fiyatının 2×'i (Ruh olarak). Yüksek riski yüksek maliyet dengeler. Alma kararı daha ağır, bonus daha büyük.</div>
+        </div>
+        <div class="cursed-row">
+          <div class="cursed-row-label">Slot Yapısı</div>
+          <div class="cursed-row-value">Normal 3 item seçeneğinden bağımsız, ek bir slot. Oyuncu normal seçimini de yapabilir. Cursed almak zorunlu değil.</div>
+        </div>
+        <div class="cursed-row">
+          <div class="cursed-row-label">The Fractured</div>
+          <div class="cursed-row-value">Her zaman 1 Cursed slot açık (state bağımsız). Fiyat normal ×1 (diğerleri ×2). Bu karakter için risk değil, core playstyle.</div>
+        </div>
+      </div>
+
+      <div class="design-note">
+        <div class="design-note-label">Tasarım Notu</div>
+        <p>Cursed itemlar "yüksek Ruh anında fırsata dönüşen tehlike" kimliğini kazandı. Overflow'dayken hem en güçlü hem en kırılgansın, hem de en cazip item önünde. Bu üçlü gerilim Soul sisteminin vaadini somutlaştırır.</p>
+      </div>
+
+      <hr class="divider">
+
+      <p><strong>MVP için hedef item sayısı: 40–50 item.</strong> Brotato 130+ item ile başladı ama MVP için bu kadar yeterli — önemli olan sinerjilerin çalışması, item çeşitliliği değil.</p>
+
+    </div>
+  </div>
+
+  <!-- 05 CHARACTERS -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-num">05</span>
+      <span class="section-title">Karakter Tasarımı</span>
+    </div>
+    <div class="section-body">
+
+      <p>MVP için <strong>3 başlangıç karakteri</strong>. Her karakter Soul System'ı farklı yorumlar. Brotato gibi her karakter başlangıç item'ı ve pasif özelliğiyle gelir.</p>
+
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Karakter</th>
+            <th>Pasif Özellik</th>
+            <th>Zorluk</th>
+            <th>Playstyle</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>The Vessel</td>
+            <td>Ruh kapasitesi %50 artık. Surge Warning süresi +2 sn — Overflow kararı için daha fazla zaman.</td>
+            <td><span class="pill pill-green">Kolay</span></td>
+            <td>Overflow'u kontrollü kullanmayı öğren. Yeni oyuncular için.</td>
+          </tr>
+          <tr>
+            <td>The Hollow</td>
+            <td>Hollow state'de hasar normale eşit. Hunger stack maksimum 5'e çıkar (normal: 3).</td>
+            <td><span class="pill pill-gold">Orta</span></td>
+            <td>Hollow'da kal, Hunger biriktir, patla. Burst damage playstyle.</td>
+          </tr>
+          <tr>
+            <td>The Fractured</td>
+            <td>Ruh seviyesi rastgele dalgalanır ama Cursed item slotu her zaman açık, fiyat ×1.</td>
+            <td><span class="pill pill-red">Zor</span></td>
+            <td>Chaos build. Cursed item sinerjilerine odaklan.</td>
+          </tr>
+        </tbody>
+      </table>
+
+    </div>
+  </div>
+
+  <!-- 06 ART DIRECTION -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-num">06</span>
+      <span class="section-title">Art Direction</span>
+    </div>
+    <div class="section-body">
+
+      <div class="stat-grid">
+        <div class="stat-card">
+          <div class="stat-card-label">Stil</div>
+          <div class="stat-card-value">Pixel Art</div>
+          <div class="stat-card-desc">16×16 / 32×32 sprite. Sınırlı palet: koyu + parlak accent.</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-label">Ton</div>
+          <div class="stat-card-value">Dark Fantasy</div>
+          <div class="stat-card-desc">Koyu arka plan, neon-soul efektleri. Moody ama okunaklı.</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-label">Renk Paleti</div>
+          <div class="stat-card-value">6–8 Renk</div>
+          <div class="stat-card-desc">Mor/mor tonları soul için. Altın = tehlike. Turuncu = uyarı. Kırmızı = ölüm.</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-label">Referans</div>
+          <div class="stat-card-value">Stoneshard</div>
+          <div class="stat-card-desc">+ Brotato renk okunabilirliği + Hades atmosferi</div>
+        </div>
+      </div>
+
+      <hr class="divider">
+
+      <p><strong>Soul state görsel geri bildirimi (güncel):</strong></p>
+      <table class="data-table">
+        <thead>
+          <tr><th>State</th><th>Aura Rengi</th><th>Ek Efekt</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Hollow</td>
+            <td>Gri, soluk</td>
+            <td>Hunger stack'i temsil eden küçük partiküller birikir</td>
+          </tr>
+          <tr>
+            <td>Stable</td>
+            <td>Beyaz, sakin</td>
+            <td>—</td>
+          </tr>
+          <tr>
+            <td>Surging</td>
+            <td>Altın, parlak</td>
+            <td>Karakterin etrafında energy trail</td>
+          </tr>
+          <tr>
+            <td>Surge Warning</td>
+            <td>Turuncu, titreşen</td>
+            <td>Ekran kenarı turuncu vignette + ses uğultusu</td>
+          </tr>
+          <tr>
+            <td>Overflow</td>
+            <td>Kırmızı parıltı</td>
+            <td>Ekran distortion + elite spawn sesi</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <p style="margin-top:16px;">Oyuncu UI'a bakmadan durumunu okuyabilir. Bu v0.2'nin en kritik erken implementasyon maddesi — görsel feedback olmadan Soul sistemi hissettirmiyor.</p>
+
+    </div>
+  </div>
+
+  <!-- 07 MVP ROADMAP -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-num">07</span>
+      <span class="section-title">MVP Roadmap — 10 Hafta</span>
+      <span class="section-badge badge-updated">v0.2 Güncellendi</span>
+    </div>
+    <div class="section-body">
+
+      <div class="timeline">
+        <div class="timeline-item">
+          <div class="timeline-week">Hafta 1–2</div>
+          <div class="timeline-title">Core Prototype</div>
+          <ul class="timeline-tasks">
+            <li>Top-down hareket + çarpışma</li>
+            <li>Soul meter sistemi (5 state — Surge Warning dahil)</li>
+            <li>Temel ateş mekaniği (1 silah tipi)</li>
+            <li>Wave spawner (basit)</li>
+            <li class="added">Hollow Hunger stack sistemi (temel implementasyon)</li>
+            <li class="added">Surge Warning görsel + ses feedback'i (erken ekle — kritik)</li>
+          </ul>
+        </div>
+        <div class="timeline-item">
+          <div class="timeline-week">Hafta 3–4</div>
+          <div class="timeline-title">Game Loop & İlk Playtest</div>
+          <ul class="timeline-tasks">
+            <li>Shop sistemi (wave arası)</li>
+            <li>10 temel item (4 kategoriden 2–3'er)</li>
+            <li>Soul state efektleri (hasar, hız, targeting)</li>
+            <li class="added">Hollow fiyat indirimi (%30) implementasyonu</li>
+            <li class="added">İlk playtest: Hunger "patlama" anı ve Overflow Warning hissi test edilir</li>
+          </ul>
+        </div>
+        <div class="timeline-item">
+          <div class="timeline-week">Hafta 5–6</div>
+          <div class="timeline-title">Content & Balance</div>
+          <ul class="timeline-tasks">
+            <li>40 item (4 kategori tamamla + Cursed item slot sistemi)</li>
+            <li>3 karakter (karakter pasif sinerji testleri)</li>
+            <li>15 wave + Boss wave</li>
+            <li>3–4 düşman tipi</li>
+          </ul>
+        </div>
+        <div class="timeline-item">
+          <div class="timeline-week">Hafta 7–8</div>
+          <div class="timeline-title">Polish & Art</div>
+          <ul class="timeline-tasks">
+            <li>Sprite'lar finalize</li>
+            <li>Soul aura efektleri — tüm 5 state için VFX</li>
+            <li>Hunger particle efekti</li>
+            <li>Ses efektleri + müzik (itch.io free asset veya AI)</li>
+            <li>UI/UX iyileştirme</li>
+          </ul>
+        </div>
+        <div class="timeline-item">
+          <div class="timeline-week">Hafta 9–10</div>
+          <div class="timeline-title">Steam Launch Prep</div>
+          <ul class="timeline-tasks">
+            <li>Steam sayfası hazırla (kapsül art, screenshots)</li>
+            <li>Wishlist kampanyası başlat</li>
+            <li>Trailer (60 sn gameplay — Hunger patlaması ve Overflow anını mutlaka göster)</li>
+            <li>Playtest + bug fix + balance pass</li>
+          </ul>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- 08 COMPETITOR ANALYSIS -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-num">08</span>
+      <span class="section-title">Rekabet Analizi & Farklılaşma</span>
+    </div>
+    <div class="section-body">
+
+      <div class="comp-grid">
+        <div class="comp-card">
+          <div class="comp-name">Vampire Survivors</div>
+          <div class="comp-row"><span class="key">Fiyat</span><span class="val">5$</span></div>
+          <div class="comp-row"><span class="key">Satış</span><span class="val">10M+</span></div>
+          <div class="comp-row"><span class="key">Fark</span><span class="val">Resource yok, pasif gameplay</span></div>
+          <div class="comp-row"><span class="key">Bizim avantaj</span><span class="val">Soul sistemi aktif karar vermeyi zorlar</span></div>
+        </div>
+        <div class="comp-card">
+          <div class="comp-name">Brotato</div>
+          <div class="comp-row"><span class="key">Fiyat</span><span class="val">5$</span></div>
+          <div class="comp-row"><span class="key">Satış</span><span class="val">5M+</span></div>
+          <div class="comp-row"><span class="key">Fark</span><span class="val">Çoklu resource, karmaşık item sistemi</span></div>
+          <div class="comp-row"><span class="key">Bizim avantaj</span><span class="val">Tek resource = daha net, yeni oyuncular için erişilebilir</span></div>
+        </div>
+        <div class="comp-card">
+          <div class="comp-name">20 Min Till Dawn</div>
+          <div class="comp-row"><span class="key">Fiyat</span><span class="val">5$</span></div>
+          <div class="comp-row"><span class="key">Satış</span><span class="val">1M+</span></div>
+          <div class="comp-row"><span class="key">Fark</span><span class="val">Manuel aim, reload mekaniği</span></div>
+          <div class="comp-row"><span class="key">Bizim avantaj</span><span class="val">Soul state sistemi daha derin risk/ödül</span></div>
+        </div>
+      </div>
+
+      <hr class="divider">
+
+      <p><strong>Temel ayrışma noktası:</strong> Rakipler ya pasif (Vampire Survivors) ya da çok karmaşık (Brotato 130+ item). SOULRIFT, <strong>tek bir kaynak etrafında yoğun ama öğrenilebilir</strong> bir risk/ödül sistemi kurar. Hollow Hunger ile "düşük ruhlu an" bile stratejik hale gelir — death spiral yok, her state'in bir değeri var.</p>
+
+    </div>
+  </div>
+
+  <!-- 09 RISKS -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-num">09</span>
+      <span class="section-title">Riskler & Önlemler</span>
+    </div>
+    <div class="section-body">
+
+      <div class="risk-item">
+        <span class="risk-level pill pill-red">Yüksek</span>
+        <div class="risk-content">
+          <div class="risk-title">Soul sistemi "hissi" vermeyebilir</div>
+          <div class="risk-mitigation">Önlem: Hafta 2'de ilk playtest. Test edilecek iki an: (1) Hunger stack dolunca öldürmenin Ruh "patlaması" hissi. (2) Surge Warning'de "şimdi karar ver" gerilimi. Görsel feedback her ikisi için de kritik — aura efektleri ve Hunger partikülleri erken ekle.</div>
+        </div>
+      </div>
+      <div class="risk-item">
+        <span class="risk-level pill pill-red">Yüksek</span>
+        <div class="risk-content">
+          <div class="risk-title">Hollow Hunger balansı — çok kolay veya çok zor olabilir</div>
+          <div class="risk-mitigation">Önlem: Hafta 2 playtest'inde Hunger değerleri değişken tut (2 sn/stack → 3 sn, stack max 3 → 5 gibi). Oyuncu Hollow'da kasıtlı kalıyorsa stack daha yavaş biriktir. Kasıtlı kalmıyorsa daha hızlı ver.</div>
+        </div>
+      </div>
+      <div class="risk-item">
+        <span class="risk-level pill pill-gold">Orta</span>
+        <div class="risk-content">
+          <div class="risk-title">Genre doygunluğu — keşfedilememe</div>
+          <div class="risk-mitigation">Önlem: Steam sayfası "Soul Risk/Reward" unique selling point'ini öne çıkar. Trailer: Hollow Hunger patlaması + Overflow kararı anı. Wishlist kampanyasına 4. haftadan başla.</div>
+        </div>
+      </div>
+      <div class="risk-item">
+        <span class="risk-level pill pill-gold">Orta</span>
+        <div class="risk-content">
+          <div class="risk-title">Scope kayması (item sayısı)</div>
+          <div class="risk-mitigation">Önlem: 40 item MVP limiti aşılmaz. Item ekleme değil, sinerji derinliği artır. İkinci oyun için saklanan fikirler listeye ekle.</div>
+        </div>
+      </div>
+      <div class="risk-item">
+        <span class="risk-level pill pill-green">Düşük</span>
+        <div class="risk-content">
+          <div class="risk-title">Unity performans sorunları</div>
+          <div class="risk-mitigation">Önlem: Sprite renderer, object pooling standart pratikler. Wave başına 50+ düşman için pool sistemi Hafta 1'de kur. Hunger particle sistemi için ParticleSystem.Play/Stop pooling ile yönet.</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="footer">
+    <div class="ver">SOULRIFT GDD — v0.2 — 2026</div>
+    <div>Bu döküman canlıdır. Her major kararla güncellenmelidir.</div>
+    <div style="margin-top:8px; font-size:10px; color:var(--accent); opacity:0.5;">v0.1 → v0.2: Hollow Hunger · Surge Warning · Hollow bonus revizyon · Cursed Item çerçevesi</div>
+  </div>
+
+</div>
+</body>
+</html>
