@@ -1,39 +1,61 @@
 # Unity 6.3 LTS — Current Best Practices
 
-**Last verified:** 2026-02-13
+**Last verified:** 2026-03-25
 
 Modern Unity 6 patterns that may not be in the LLM's training data.
 These are production-ready recommendations as of Unity 6.3 LTS.
 
 ---
 
+## SoulRift-Specific Recommendations (2D Roguelite)
+
+### Render Pipeline
+- **Use URP** with 2D Renderer — best supported pipeline for 2D games
+- HDRP no longer receiving new features — all graphics work is on URP
+- URP Render Graph is mandatory in 6.3 — no Compatibility Mode fallback
+- New Bloom filters (Kawase, Dual) — useful for Soul aura visual effects
+
+### 2D Physics
+- Box2D v3 API is new in 6.3 — runs alongside existing API
+- **Recommendation**: Start with existing 2D Physics API for stability
+- Use object pooling for projectiles and enemies (50+ per wave)
+
+### 2D Rendering (WEB VERIFIED)
+- New Mesh Renderer 2D and Skinned Mesh Renderer 2D workflows in URP
+- Sprite Atlas Analyzer tool available for optimization
+- 2D lights can light 3D elements in Sorting Groups — useful for hybrid effects
+
+### Performance for Wave-Based Gameplay
+- **Object Pooling**: Essential (enemies, projectiles, soul orbs, particles)
+- **Sprite Atlas**: Group related sprites into atlases to reduce draw calls
+- **Shader Build Settings**: Configure without coding to reduce compile times
+- Use `ParticleSystem.Play/Stop` with pooling for aura and Hunger particle effects
+- Target: 60fps, 16.6ms frame budget
+
+---
+
 ## Project Setup
 
-### Use Unity 6.3 LTS for Production
-- **Tech Stream** (6.4+): Latest features, less stable
-- **LTS** (6.3): Production-ready, 2-year support (until Dec 2027)
-
-### Choose the Right Render Pipeline
-- **URP (Universal)**: Mobile, cross-platform, good performance ✅ Recommended for most games
-- **HDRP (High Definition)**: High-end PC/console, photorealistic
+### Render Pipeline Choice
+- **URP (Universal)**: Mobile, cross-platform, best for 2D — RECOMMENDED
+- **HDRP**: High-end PC/console only, no longer getting new features
 - **Built-in**: Deprecated, avoid for new projects
+
+### Assembly Definitions
+- Use Assembly Definitions to reduce compile times
+- Separate game code into logical assemblies (Core, Gameplay, UI, etc.)
 
 ---
 
 ## Scripting
 
-### Use C# 9+ Features (Unity 6 Supports C# 9)
+### C# 9+ Features (Unity 6 Supports C# 9)
 
 ```csharp
-// ✅ Record types for data
+// Record types for data
 public record PlayerData(string Name, int Level, float Health);
 
-// ✅ Init-only properties
-public class Config {
-    public string GameMode { get; init; }
-}
-
-// ✅ Pattern matching
+// Pattern matching
 var result = enemy switch {
     Boss boss => boss.Enrage(),
     Minion minion => minion.Flee(),
@@ -44,70 +66,17 @@ var result = enemy switch {
 ### Async/Await for Asset Loading
 
 ```csharp
-// ✅ Modern async pattern
 public async Task<GameObject> LoadEnemyAsync(string key) {
     var handle = Addressables.LoadAssetAsync<GameObject>(key);
     return await handle.Task;
 }
 ```
 
-### Use Source Generators for Serialization (Unity 6+)
-
-```csharp
-// ✅ Source-generated serialization (faster, less reflection)
-[GenerateSerializer]
-public partial struct PlayerStats : IComponentData {
-    public int Health;
-    public int Mana;
-}
-```
-
 ---
 
-## DOTS/ECS (Production-Ready in Unity 6.3 LTS)
-
-### Use ISystem (Not ComponentSystem)
+## Input — Use Input System Package
 
 ```csharp
-// ✅ Modern unmanaged ISystem (Burst-compatible)
-public partial struct MovementSystem : ISystem {
-    public void OnCreate(ref SystemState state) { }
-
-    public void OnUpdate(ref SystemState state) {
-        foreach (var (transform, speed) in
-            SystemAPI.Query<RefRW<LocalTransform>, RefRO<MoveSpeed>>()) {
-            transform.ValueRW.Position += speed.ValueRO.Value * SystemAPI.Time.DeltaTime;
-        }
-    }
-}
-```
-
-### Use IJobEntity for Parallel Jobs
-
-```csharp
-// ✅ IJobEntity (replaces IJobForEach)
-[BurstCompile]
-public partial struct DamageJob : IJobEntity {
-    public float DeltaTime;
-
-    void Execute(ref Health health, in DamageOverTime dot) {
-        health.Value -= dot.DamagePerSecond * DeltaTime;
-    }
-}
-
-// Schedule it
-var job = new DamageJob { DeltaTime = SystemAPI.Time.DeltaTime };
-job.ScheduleParallel();
-```
-
----
-
-## Input
-
-### Use Input System Package (Not Legacy Input)
-
-```csharp
-// ✅ Input Actions (rebindable, cross-platform)
 using UnityEngine.InputSystem;
 
 public class PlayerInput : MonoBehaviour {
@@ -127,78 +96,59 @@ Create Input Actions asset in editor, generate C# class via inspector.
 
 ---
 
-## UI
-
-### Use UI Toolkit for Runtime UI (Production-Ready in Unity 6)
+## UI — UI Toolkit (Production-Ready in Unity 6)
 
 ```csharp
-// ✅ UI Toolkit (replaces UGUI for new projects)
 using UnityEngine.UIElements;
 
-public class MainMenu : MonoBehaviour {
+public class GameHUD : MonoBehaviour {
     void OnEnable() {
         var root = GetComponent<UIDocument>().rootVisualElement;
-
-        var playButton = root.Q<Button>("play-button");
-        playButton.clicked += StartGame;
-
-        var scoreLabel = root.Q<Label>("score");
-        scoreLabel.text = $"High Score: {PlayerPrefs.GetInt("HighScore")}";
+        var soulMeter = root.Q<ProgressBar>("soul-meter");
+        soulMeter.value = currentSoulLevel;
     }
 }
 ```
 
-**UXML** (UI structure) + **USS** (styling) = HTML/CSS-like workflow.
+**UXML** (structure) + **USS** (styling) = HTML/CSS-like workflow.
+Note: USS parser is stricter in 6.3 — write valid CSS-like syntax.
 
 ---
 
-## Asset Management
-
-### Use Addressables (Not Resources)
+## Data-Driven Design with ScriptableObjects
 
 ```csharp
-// ✅ Addressables (async, memory-efficient)
+// Ideal for SoulRift's item system, enemy configs, soul state thresholds
+[CreateAssetMenu(fileName = "NewItem", menuName = "SoulRift/Item")]
+public class ItemData : ScriptableObject {
+    public string ItemName;
+    public ItemCategory Category;
+    public float SoulCost;
+    public List<ItemEffect> Effects;
+}
+```
+
+---
+
+## Asset Management — Use Addressables
+
+```csharp
 using UnityEngine.AddressableAssets;
 
 public async Task SpawnEnemyAsync(string enemyKey) {
     var handle = Addressables.InstantiateAsync(enemyKey);
     var enemy = await handle.Task;
-
-    // Cleanup: release when destroyed
-    Addressables.ReleaseInstance(enemy);
+    Addressables.ReleaseInstance(enemy); // Cleanup when done
 }
 ```
-
-**Benefits:** Async loading, remote content delivery, better memory control.
-
----
-
-## Rendering
-
-### Use RenderGraph API for Custom Passes (URP/HDRP)
-
-```csharp
-// ✅ RenderGraph API (Unity 6+)
-public override void RecordRenderGraph(RenderGraph renderGraph, ContextContainer frameData) {
-    using (var builder = renderGraph.AddRasterRenderPass<PassData>("My Pass", out var passData)) {
-        // Setup pass
-        builder.SetRenderFunc((PassData data, RasterGraphContext context) => {
-            // Execute commands
-        });
-    }
-}
-```
-
-**Replaces:** Old `CommandBuffer.Execute()` pattern.
 
 ---
 
 ## Performance
 
-### Use Burst Compiler + Jobs System
+### Burst Compiler + Jobs System
 
 ```csharp
-// ✅ Burst-compiled job (massive performance gain)
 [BurstCompile]
 struct ParticleUpdateJob : IJobParallelFor {
     public NativeArray<float3> Positions;
@@ -209,126 +159,61 @@ struct ParticleUpdateJob : IJobParallelFor {
         Positions[index] += Velocities[index] * DeltaTime;
     }
 }
-
-// Schedule
-var job = new ParticleUpdateJob {
-    Positions = positions,
-    Velocities = velocities,
-    DeltaTime = Time.deltaTime
-};
-job.Schedule(positions.Length, 64).Complete();
 ```
 
-**20-100x faster** than equivalent C# code.
-
----
-
-### Use GPU Instancing for Repeated Objects
+### Object Pooling Pattern
 
 ```csharp
-// ✅ GPU Instancing (thousands of objects, minimal draw calls)
-Graphics.RenderMeshInstanced(
-    new RenderParams(material),
-    mesh,
-    0,
-    matrices // NativeArray<Matrix4x4>
-);
-```
+// Unity 6 has built-in ObjectPool<T>
+using UnityEngine.Pool;
 
----
+private ObjectPool<GameObject> enemyPool;
 
-## Memory Management
-
-### Use NativeContainers (Not Managed Arrays in Jobs)
-
-```csharp
-// ✅ NativeArray (no GC, Burst-compatible)
-NativeArray<int> data = new NativeArray<int>(1000, Allocator.TempJob);
-// ... use in job
-data.Dispose(); // Manual cleanup required
-
-// ✅ Or use using statement
-using var data = new NativeArray<int>(1000, Allocator.TempJob);
-// Auto-disposed
-```
-
----
-
-## Multiplayer
-
-### Use Netcode for GameObjects (Official)
-
-```csharp
-// ✅ Unity's official netcode
-using Unity.Netcode;
-
-public class Player : NetworkBehaviour {
-    private NetworkVariable<int> health = new NetworkVariable<int>(100);
-
-    [ServerRpc]
-    public void TakeDamageServerRpc(int damage) {
-        health.Value -= damage;
-    }
+void Awake() {
+    enemyPool = new ObjectPool<GameObject>(
+        createFunc: () => Instantiate(enemyPrefab),
+        actionOnGet: obj => obj.SetActive(true),
+        actionOnRelease: obj => obj.SetActive(false),
+        defaultCapacity: 50
+    );
 }
 ```
 
-**Replaces:** UNet (deprecated), MLAPI (renamed to Netcode for GameObjects).
-
 ---
 
-## Testing
-
-### Use Unity Test Framework (NUnit-based)
+## Testing — Unity Test Framework (NUnit)
 
 ```csharp
-// ✅ Play Mode Test
 [UnityTest]
-public IEnumerator Player_TakesDamage_HealthDecreases() {
-    var player = new GameObject().AddComponent<Player>();
-    player.Health = 100;
+public IEnumerator SoulSystem_CollectSoul_IncreasesLevel() {
+    var player = new GameObject().AddComponent<SoulSystem>();
+    player.CurrentSoul = 50f;
 
-    player.TakeDamage(25);
-    yield return null; // Wait one frame
+    player.CollectSoul(25f);
+    yield return null;
 
-    Assert.AreEqual(75, player.Health);
+    Assert.AreEqual(75f, player.CurrentSoul);
 }
 ```
 
 ---
 
-## Debugging
-
-### Use Logging Best Practices
-
-```csharp
-// ✅ Structured logging (Unity 6+)
-using UnityEngine;
-
-Debug.Log($"Player {playerName} scored {score} points");
-
-// ✅ Conditional compilation for debug code
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
-    Debug.DrawRay(transform.position, direction, Color.red);
-#endif
-```
-
----
-
-## Summary: Unity 6 Tech Stack
+## Summary: Unity 6 Tech Stack for SoulRift
 
 | Feature | Use This (2026) | Avoid This (Legacy) |
 |---------|------------------|----------------------|
+| **Rendering** | URP + 2D Renderer | Built-in pipeline |
 | **Input** | Input System package | `Input` class |
 | **UI** | UI Toolkit | UGUI (Canvas) |
-| **ECS** | ISystem + IJobEntity | ComponentSystem |
-| **Rendering** | URP + RenderGraph | Built-in pipeline |
-| **Assets** | Addressables | Resources |
-| **Jobs** | Burst + IJobParallelFor | Coroutines for heavy work |
-| **Multiplayer** | Netcode for GameObjects | UNet |
+| **Assets** | Addressables | Resources.Load |
+| **Physics** | 2D Physics (existing API) | — |
+| **Pooling** | ObjectPool<T> | Manual pooling |
+| **Data** | ScriptableObjects | Hardcoded values |
+| **Testing** | Unity Test Framework | Manual testing only |
 
 ---
 
 **Sources:**
-- https://docs.unity3d.com/6000.0/Documentation/Manual/BestPracticeGuides.html
-- https://docs.unity3d.com/Packages/com.unity.entities@1.3/manual/index.html
-- https://docs.unity3d.com/Packages/com.unity.inputsystem@1.11/manual/index.html
+- https://docs.unity3d.com/6000.3/Documentation/Manual/best-practice-guides.html
+- https://docs.unity3d.com/6000.3/Documentation/Manual/WhatsNewUnity63.html
+- https://unity.com/blog/unity-6-3-lts-is-now-available

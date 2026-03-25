@@ -1,154 +1,108 @@
 # Unity 6.3 LTS — Breaking Changes
 
-**Last verified:** 2026-02-13
+**Last verified:** 2026-03-25
 
 This document tracks breaking API changes and behavioral differences between Unity 2022 LTS
-(likely in model training) and Unity 6.3 LTS (current version). Organized by risk level.
+(likely in model training) and Unity 6.3 LTS (current version). Organized by version.
 
-## HIGH RISK — Will Break Existing Code
+## Unity 6.0 (from 2022 LTS)
 
-### Entities/DOTS API Complete Overhaul
-**Versions:** Entities 1.0+ (Unity 6.0+)
+### Render Pipeline
+- **URP Compatibility Mode deprecated** — Render Graph is now the standard path
+- `SetupRenderPasses` deprecated — use `AddRenderPasses` with Render Graph system
+- `CustomEditorForRenderPipelineAttribute` deprecated — use `CustomEditor`
+- `VolumeComponentMenuForRenderPipelineAttribute` deprecated — use `VolumeComponentMenu`
 
-```csharp
-// ❌ OLD (pre-Unity 6, GameObjectEntity pattern)
-public class HealthComponent : ComponentData {
-    public float Value;
-}
+### Graphics Formats
+- Previously deprecated graphics formats now produce **compile errors**
+- `GraphicsFormatUtility.GetGraphicsFormat` no longer returns obsolete formats
+- `RenderTextureFormat.Depth` now maps to `GraphicsFormat.None` (was `DepthAuto`)
 
-// ✅ NEW (Unity 6+, IComponentData)
-public struct HealthComponent : IComponentData {
-    public float Value;
-}
+### UI Toolkit
+- `ExecuteDefaultAction` / `ExecuteDefaultActionAtTarget` deprecated — use `HandleEventBubbleUp`
+- `PreventDefault` deprecated — use `StopPropagation`
+- AtTarget dispatching phase deprecated
 
-// ❌ OLD: ComponentSystem
-public class DamageSystem : ComponentSystem { }
+### Editor
+- Assets/Create menu reorganized — menu item priorities may need updating
+- Built-in ScriptTemplate files renamed
+- `EditorApplication.ExecuteMenuItem` paths may have changed
 
-// ✅ NEW: ISystem (unmanaged, Burst-compatible)
-public partial struct DamageSystem : ISystem {
-    public void OnCreate(ref SystemState state) { }
-    public void OnUpdate(ref SystemState state) { }
-}
-```
-
-**Migration:** Follow Unity's ECS migration guide. Major architectural changes required.
-
----
-
-### Input System — Legacy Input Deprecated
-**Versions:** Unity 6.0+
+### Input System
+- Legacy Input Manager deprecated, new Input System is default
 
 ```csharp
-// ❌ OLD: Input class (deprecated)
+// OLD: Input class (deprecated)
 if (Input.GetKeyDown(KeyCode.Space)) { }
 
-// ✅ NEW: Input System package
+// NEW: Input System package
 using UnityEngine.InputSystem;
 if (Keyboard.current.spaceKey.wasPressedThisFrame) { }
 ```
 
-**Migration:** Install Input System package, replace all `Input.*` calls with new API.
-
----
-
-### URP/HDRP Renderer Feature API Changes
-**Versions:** Unity 6.0+
-
+### Rendering API
 ```csharp
-// ❌ OLD: ScriptableRenderPass.Execute signature
+// OLD: ScriptableRenderPass.Execute
 public override void Execute(ScriptableRenderContext context, ref RenderingData data)
 
-// ✅ NEW: Uses RenderGraph API
+// NEW: RenderGraph API
 public override void RecordRenderGraph(RenderGraph renderGraph, ContextContainer frameData)
 ```
 
-**Migration:** Update custom render passes to use RenderGraph API.
+---
+
+## Unity 6.1 (from 6.0)
+
+- Incremental changes, no major breaking API changes for 2D development
+
+## Unity 6.2 (from 6.1)
+
+- Minor URP enhancements and fixes
+- Check official guide: https://docs.unity3d.com/6000.3/Documentation/Manual/UpgradeGuideUnity62.html
 
 ---
 
-## MEDIUM RISK — Behavioral Changes
+## Unity 6.3 LTS (from 6.2) — WEB VERIFIED
 
-### Addressables — Asset Loading Returns
-**Versions:** Unity 6.2+
+### URP — Compatibility Mode REMOVED
+- **CRITICAL**: URP Compatibility Mode fully removed (was deprecated in 6.0)
+- Code stripped by default — improves compilation and build size
+- `RenderGraphSettings.enableRenderCompatibilityMode` now read-only (returns `false`)
+- **Action**: All custom Scriptable Renderer Features must use Render Graph
 
-Asset loading failures now throw exceptions by default instead of returning null.
-Add proper exception handling or use `TryLoad` variants.
+### 2D Physics — Box2D v3
+- New low-level 2D physics API based on Box2D v3 added
+- Runs alongside existing API — old API still works
+- **Action for SoulRift**: Use existing API for now, migrate later when v3 API stabilizes
 
-```csharp
-// ❌ OLD: Silent null on failure
-var handle = Addressables.LoadAssetAsync<Sprite>("key");
-var sprite = handle.Result; // null if failed
+### USS Parser (UI Toolkit) — Stricter
+- USS parser upgraded with stricter validation
+- Single dots (`.`) in selectors no longer silently become wildcards (`*`)
+- Missing/extra brackets, excessive semicolons now detected as errors
+- **Action**: Validate all USS files
 
-// ✅ NEW: Throws on failure, use try/catch or TryLoad
-try {
-    var handle = Addressables.LoadAssetAsync<Sprite>("key");
-    var sprite = await handle.Task;
-} catch (Exception e) {
-    Debug.LogError($"Failed to load: {e}");
-}
-```
+### Accessibility API
+- `AccessibilityRole` changed from flags enum to standard enum
+- Bitwise operations on AccessibilityRole values may cause warnings
 
----
-
-### Physics — Default Solver Iterations Changed
-**Versions:** Unity 6.0+
-
-Default solver iterations increased for better stability.
-Check `Physics.defaultSolverIterations` if you rely on old behavior.
+### Removed Features
+- Legacy ETC compression mode removed
+- Multiplay Hosting deprecated (shutdown March 31, 2026)
 
 ---
 
-## LOW RISK — Deprecations (Still Functional)
+## SoulRift-Specific Impact Summary
 
-### UGUI (Legacy UI)
-**Status:** Deprecated but supported
-**Replacement:** UI Toolkit
-
-UGUI still works but UI Toolkit is recommended for new projects.
-
----
-
-### Legacy Particle System
-**Status:** Deprecated
-**Replacement:** Visual Effect Graph (VFX Graph)
-
----
-
-### Old Animation System
-**Status:** Deprecated
-**Replacement:** Animator Controller (Mecanim)
-
----
-
-## Platform-Specific Breaking Changes
-
-### WebGL
-- **Unity 6.0+**: WebGPU is now the default (WebGL 2.0 fallback available)
-- Update shaders for WebGPU compatibility
-
-### Android
-- **Unity 6.0+**: Minimum API level raised to 24 (Android 7.0)
-
-### iOS
-- **Unity 6.0+**: Minimum deployment target raised to iOS 13
-
----
-
-## Migration Checklist
-
-When upgrading from 2022 LTS to Unity 6.3 LTS:
-
-- [ ] Audit all DOTS/ECS code (complete rewrite likely needed)
-- [ ] Replace `Input` class with Input System package
-- [ ] Update custom render passes to RenderGraph API
-- [ ] Add exception handling to Addressables calls
-- [ ] Test physics behavior (solver iterations changed)
-- [ ] Consider migrating UGUI to UI Toolkit for new UI
-- [ ] Update WebGL shaders for WebGPU
-- [ ] Verify minimum platform versions (Android/iOS)
+| Change | Impact | Action |
+|--------|--------|--------|
+| URP Compat Mode removed | LOW (new project) | Use Render Graph from start |
+| Box2D v3 alongside old API | LOW | Use existing 2D Physics API |
+| USS parser stricter | LOW (new project) | Write valid USS from start |
+| Input System default | MEDIUM | Use new Input System package |
+| Render Graph mandatory | LOW (new project) | Use RenderGraph for any custom passes |
 
 ---
 
 **Sources:**
-- https://docs.unity3d.com/6000.0/Documentation/Manual/upgrade-guides.html
-- https://docs.unity3d.com/Packages/com.unity.entities@1.3/manual/upgrade-guide.html
+- https://docs.unity3d.com/6000.3/Documentation/Manual/UpgradeGuideUnity6.html
+- https://docs.unity3d.com/6000.3/Documentation/Manual/UpgradeGuideUnity63.html

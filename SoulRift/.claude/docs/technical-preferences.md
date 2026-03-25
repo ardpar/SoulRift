@@ -5,32 +5,34 @@
 
 ## Engine & Language
 
-- **Engine**: [TO BE CONFIGURED — run /setup-engine]
-- **Language**: [TO BE CONFIGURED]
-- **Rendering**: [TO BE CONFIGURED]
-- **Physics**: [TO BE CONFIGURED]
+- **Engine**: Unity 6.3 LTS (6000.3.x)
+- **Language**: C#
+- **Rendering**: URP (Universal Render Pipeline) — 2D pixel art icin ideal
+- **Physics**: Unity 2D Physics (Box2D)
 
 ## Naming Conventions
 
-- **Classes**: [TO BE CONFIGURED]
-- **Variables**: [TO BE CONFIGURED]
-- **Signals/Events**: [TO BE CONFIGURED]
-- **Files**: [TO BE CONFIGURED]
-- **Scenes/Prefabs**: [TO BE CONFIGURED]
-- **Constants**: [TO BE CONFIGURED]
+- **Classes**: PascalCase (e.g., `PlayerController`, `SoulSystem`)
+- **Public Fields/Properties**: PascalCase (e.g., `MoveSpeed`, `SoulLevel`)
+- **Private Fields**: _camelCase (e.g., `_moveSpeed`, `_currentSoulState`)
+- **Methods**: PascalCase (e.g., `TakeDamage()`, `CollectSoul()`)
+- **Events/Delegates**: PascalCase, On prefix (e.g., `OnSoulStateChanged`)
+- **Files**: PascalCase matching class (e.g., `PlayerController.cs`)
+- **Prefabs**: PascalCase (e.g., `EnemySkeleton`, `SoulOrb`)
+- **Constants**: UPPER_SNAKE_CASE (e.g., `MAX_SOUL_LEVEL`, `HOLLOW_THRESHOLD`)
 
 ## Performance Budgets
 
-- **Target Framerate**: [TO BE CONFIGURED]
-- **Frame Budget**: [TO BE CONFIGURED]
-- **Draw Calls**: [TO BE CONFIGURED]
-- **Memory Ceiling**: [TO BE CONFIGURED]
+- **Target Framerate**: 60 fps
+- **Frame Budget**: 16.6 ms
+- **Draw Calls**: [TO BE CONFIGURED — set after first profiling pass]
+- **Memory Ceiling**: [TO BE CONFIGURED — set after first profiling pass]
 
 ## Testing
 
-- **Framework**: [TO BE CONFIGURED]
+- **Framework**: NUnit (Unity Test Framework)
 - **Minimum Coverage**: [TO BE CONFIGURED]
-- **Required Tests**: Balance formulas, gameplay systems, networking (if applicable)
+- **Required Tests**: Balance formulas, gameplay systems (Soul System, item sinerjileri)
 
 ## Forbidden Patterns
 
