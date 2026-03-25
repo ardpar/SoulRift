@@ -49,13 +49,9 @@ namespace SoulRift.Gameplay
 
         private IEnumerator RunWave()
         {
-            if (_currentWaveIndex >= _waves.Length)
-            {
-                // Tum wave'ler bitti — basit fallback: zorluk artarak devam
-                yield break;
-            }
-
-            WaveData wave = _waves[_currentWaveIndex];
+            // Son wave'den sonra tekrar son wave'i kullan (zorluk artarak)
+            int waveIdx = Mathf.Min(_currentWaveIndex, _waves.Length - 1);
+            WaveData wave = _waves[waveIdx];
             OnWaveStarted?.Invoke(_currentWaveIndex + 1);
 
             foreach (var spawnEntry in wave.Spawns)
@@ -100,7 +96,12 @@ namespace SoulRift.Gameplay
 
             float angle = UnityEngine.Random.Range(0f, 360f) * Mathf.Deg2Rad;
             Vector2 offset = new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * _spawnRadius;
-            return (Vector2)_player.position + offset;
+            Vector2 pos = (Vector2)_player.position + offset;
+
+            // Arena sinirlari icinde tut (duvar kalinligi 1 birim)
+            pos.x = Mathf.Clamp(pos.x, -13.5f, 13.5f);
+            pos.y = Mathf.Clamp(pos.y, -9.5f, 9.5f);
+            return pos;
         }
 
         private void HandleEnemyDied(Enemy enemy)

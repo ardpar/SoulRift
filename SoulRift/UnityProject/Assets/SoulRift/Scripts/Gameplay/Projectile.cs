@@ -16,6 +16,7 @@ namespace SoulRift.Gameplay
         private float _timer;
         private Rigidbody2D _rb;
         private GameObject _prefabRef;
+        private bool _returned;
 
         private void Awake()
         {
@@ -51,6 +52,9 @@ namespace SoulRift.Gameplay
 
         private void ReturnToPool()
         {
+            if (_returned) return;
+            _returned = true;
+
             if (_prefabRef != null && PoolManager.Instance != null)
                 PoolManager.Instance.Release(gameObject, _prefabRef);
             else
@@ -60,6 +64,7 @@ namespace SoulRift.Gameplay
         public void OnSpawn()
         {
             _timer = 0f;
+            _returned = false;
         }
 
         public void OnDespawn()

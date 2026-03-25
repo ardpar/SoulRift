@@ -29,41 +29,45 @@ namespace SoulRift.Core
 
         private static string CreateDefaultJson()
         {
-            // Fallback: programmatic tanimlama
-            var asset = new InputActionAsset();
-
-            var gameplayMap = asset.AddActionMap("Gameplay");
-            var move = gameplayMap.AddAction("Move", type: InputActionType.Value,
-                expectedControlLayout: "Vector2");
-            move.AddCompositeBinding("2DVector")
-                .With("Up", "<Keyboard>/w")
-                .With("Down", "<Keyboard>/s")
-                .With("Left", "<Keyboard>/a")
-                .With("Right", "<Keyboard>/d");
-            move.AddBinding("<Gamepad>/leftStick");
-
-            var aim = gameplayMap.AddAction("Aim", type: InputActionType.Value,
-                expectedControlLayout: "Vector2");
-            aim.AddBinding("<Mouse>/position");
-            aim.AddBinding("<Gamepad>/rightStick");
-
-            var fire = gameplayMap.AddAction("Fire", type: InputActionType.Button);
-            fire.AddBinding("<Mouse>/leftButton");
-            fire.AddBinding("<Gamepad>/rightTrigger");
-
-            var uiMap = asset.AddActionMap("UI");
-            var navigate = uiMap.AddAction("Navigate", type: InputActionType.Value,
-                expectedControlLayout: "Vector2");
-            navigate.AddBinding("<Keyboard>/upArrow");
-
-            var confirm = uiMap.AddAction("Confirm", type: InputActionType.Button);
-            confirm.AddBinding("<Keyboard>/enter");
-            confirm.AddBinding("<Mouse>/leftButton");
-
-            var cancel = uiMap.AddAction("Cancel", type: InputActionType.Button);
-            cancel.AddBinding("<Keyboard>/escape");
-
-            return asset.ToJson();
+            return @"{
+                ""name"": ""PlayerInputActions"",
+                ""maps"": [
+                    {
+                        ""name"": ""Gameplay"",
+                        ""actions"": [
+                            { ""name"": ""Move"", ""type"": ""Value"", ""expectedControlType"": ""Vector2"" },
+                            { ""name"": ""Aim"", ""type"": ""Value"", ""expectedControlType"": ""Vector2"" },
+                            { ""name"": ""Fire"", ""type"": ""Button"" }
+                        ],
+                        ""bindings"": [
+                            { ""path"": ""2DVector"", ""isComposite"": true, ""action"": ""Move"" },
+                            { ""path"": ""<Keyboard>/w"", ""isPartOfComposite"": true, ""name"": ""up"", ""action"": ""Move"" },
+                            { ""path"": ""<Keyboard>/s"", ""isPartOfComposite"": true, ""name"": ""down"", ""action"": ""Move"" },
+                            { ""path"": ""<Keyboard>/a"", ""isPartOfComposite"": true, ""name"": ""left"", ""action"": ""Move"" },
+                            { ""path"": ""<Keyboard>/d"", ""isPartOfComposite"": true, ""name"": ""right"", ""action"": ""Move"" },
+                            { ""path"": ""<Gamepad>/leftStick"", ""action"": ""Move"" },
+                            { ""path"": ""<Mouse>/position"", ""action"": ""Aim"" },
+                            { ""path"": ""<Gamepad>/rightStick"", ""action"": ""Aim"" },
+                            { ""path"": ""<Mouse>/leftButton"", ""action"": ""Fire"" },
+                            { ""path"": ""<Gamepad>/rightTrigger"", ""action"": ""Fire"" }
+                        ]
+                    },
+                    {
+                        ""name"": ""UI"",
+                        ""actions"": [
+                            { ""name"": ""Navigate"", ""type"": ""Value"", ""expectedControlType"": ""Vector2"" },
+                            { ""name"": ""Confirm"", ""type"": ""Button"" },
+                            { ""name"": ""Cancel"", ""type"": ""Button"" }
+                        ],
+                        ""bindings"": [
+                            { ""path"": ""<Keyboard>/upArrow"", ""action"": ""Navigate"" },
+                            { ""path"": ""<Keyboard>/enter"", ""action"": ""Confirm"" },
+                            { ""path"": ""<Mouse>/leftButton"", ""action"": ""Confirm"" },
+                            { ""path"": ""<Keyboard>/escape"", ""action"": ""Cancel"" }
+                        ]
+                    }
+                ]
+            }";
         }
 
         public class GameplayActions

@@ -1,0 +1,30 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7b744d01dccfe41b1b635615733a74e7, type: 3}
+  m_Name: SoulStateData
+  m_EditorClassIdentifier: SoulRift.Core::SoulRift.Core.SoulStateData
+  HollowThreshold: 0.25
+  StableThreshold: 0.6
+  SurgingThreshold: 0.85
+  OverflowThreshold: 0.9
+  Hysteresis: 0.02
+  HollowDamageMultiplier: 0.5
+  StableDamageMultiplier: 1
+  SurgingDamageMultiplier: 1.75
+  OverflowDamageMultiplier: 3
+  HollowSpeedMultiplier: 0.8
+  StableSpeedMultiplier: 1
+  SurgingSpeedMultiplier: 1
+  OverflowSpeedMultiplier: 1
+  WarningDuration: 3.5
+  HollowDiscount: 0.3
+  CursedCostMultiplier: 2

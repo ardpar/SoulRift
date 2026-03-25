@@ -4,6 +4,9 @@
 EditorBuildSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 2
-  m_Scenes: []
+  m_Scenes:
+  - enabled: 1
+    path: Assets/SoulRift/Scenes/GameScene.unity
+    guid: 96c7f05f24d6249c68e71e24a800d621
   m_configObjects: {}
   m_UseUCBPForAssetBundles: 0

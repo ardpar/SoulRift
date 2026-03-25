@@ -3,7 +3,9 @@
     "rootNamespace": "SoulRift.Gameplay",
     "references": [
         "SoulRift.Core",
-        "Unity.InputSystem"
+        "SoulRift.UI",
+        "Unity.InputSystem",
+        "Unity.TextMeshPro"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

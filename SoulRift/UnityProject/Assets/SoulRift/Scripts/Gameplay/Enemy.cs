@@ -17,6 +17,7 @@ namespace SoulRift.Gameplay
         private Rigidbody2D _rb;
         private Transform _target;
         private GameObject _prefabRef;
+        private bool _dead;
 
         public static event Action<Enemy> OnEnemyDied;
 
@@ -55,6 +56,9 @@ namespace SoulRift.Gameplay
 
         private void Die()
         {
+            if (_dead) return;
+            _dead = true;
+
             OnEnemyDied?.Invoke(this);
 
             if (_prefabRef != null && PoolManager.Instance != null)
@@ -74,6 +78,7 @@ namespace SoulRift.Gameplay
         public void OnSpawn()
         {
             _currentHealth = _data != null ? _data.MaxHealth : 20f;
+            _dead = false;
         }
 
         public void OnDespawn()

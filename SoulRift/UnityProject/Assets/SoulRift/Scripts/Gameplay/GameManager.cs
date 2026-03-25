@@ -1,16 +1,21 @@
+using System.Collections;
 using UnityEngine;
+using UnityEngine.UI;
+using TMPro;
 using SoulRift.Core;
+using SoulRift.UI;
 
 namespace SoulRift.Gameplay
 {
     /// <summary>
-    /// Oyun akisini yonetir: baslangic, olum, yeniden baslama.
+    /// Oyun akisini yonetir: baslangic, olum, yeniden baslama, wave sayaci.
     /// </summary>
     public class GameManager : MonoBehaviour
     {
         [SerializeField] private SoulSystem _soulSystem;
         [SerializeField] private WaveManager _waveManager;
         [SerializeField] private PoolManager _poolManager;
+        [SerializeField] private SoulMeterHUD _soulMeterHUD;
 
         [Header("Prefab Warmup")]
         [SerializeField] private GameObject _enemyPrefab;
@@ -20,22 +25,36 @@ namespace SoulRift.Gameplay
         [SerializeField] private GameObject _soulOrbPrefab;
         [SerializeField] private int _soulOrbWarmup = 30;
 
+        [Header("Game Over UI")]
+        [SerializeField] private GameObject _gameOverPanel;
+        [SerializeField] private TextMeshProUGUI _gameOverText;
+        [SerializeField] private Button _restartButton;
+
         private bool _gameOver;
 
         private void OnEnable()
         {
             if (_soulSystem != null)
                 _soulSystem.OnPlayerDeath += HandlePlayerDeath;
+            if (_waveManager != null)
+                _waveManager.OnWaveStarted += HandleWaveStarted;
         }
 
         private void OnDisable()
         {
             if (_soulSystem != null)
                 _soulSystem.OnPlayerDeath -= HandlePlayerDeath;
+            if (_waveManager != null)
+                _waveManager.OnWaveStarted -= HandleWaveStarted;
         }
 
         private void Start()
         {
+            if (_gameOverPanel != null)
+                _gameOverPanel.SetActive(false);
+            if (_restartButton != null)
+                _restartButton.onClick.AddListener(RestartGame);
+
             WarmupPools();
             _waveManager.StartFirstWave();
         }
@@ -52,13 +71,40 @@ namespace SoulRift.Gameplay
                 _poolManager.Warmup(_soulOrbPrefab, _soulOrbWarmup);
         }
 
+        private void HandleWaveStarted(int waveNumber)
+        {
+            if (_soulMeterHUD != null)
+                _soulMeterHUD.SetWaveText(waveNumber);
+        }
+
         private void HandlePlayerDeath()
         {
             if (_gameOver) return;
             _gameOver = true;
 
-            Debug.Log($"GAME OVER — Wave {_waveManager.CurrentWave}");
+            if (_gameOverPanel != null)
+            {
+                _gameOverPanel.SetActive(true);
+                if (_gameOverText != null)
+                    _gameOverText.text = $"GAME OVER\nWave {_waveManager.CurrentWave}\n\n<size=24>Tikla veya R'ye bas</size>";
+            }
+
             Time.timeScale = 0f;
+            StartCoroutine(WaitForRestart());
+        }
+
+        private IEnumerator WaitForRestart()
+        {
+            // timeScale=0'da calismak icin realtime wait
+            yield return new WaitForSecondsRealtime(0.5f);
+
+            while (!UnityEngine.Input.GetKeyDown(KeyCode.R)
+                && !UnityEngine.Input.GetMouseButtonDown(0))
+            {
+                yield return null;
+            }
+
+            RestartGame();
         }
 
         public void RestartGame()
